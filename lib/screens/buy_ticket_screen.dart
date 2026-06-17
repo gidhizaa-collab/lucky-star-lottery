@@ -13,6 +13,7 @@ class BuyTicketScreen extends StatefulWidget {
 class _BuyTicketScreenState extends State<BuyTicketScreen> {
   final PageController _pageController = PageController();
   final TextEditingController _searchController = TextEditingController();
+  final Random _random = Random();
   List<String> _tickets = [];
   int _currentPage = 0;
   String _selectedTicket = '';
@@ -25,17 +26,8 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
 
   void _generateTickets() {
     final prefix = widget.settings['ticket_prefix'] ?? 'L';
-    final random = Random();
-    _tickets = List.generate(50, (i) => '$prefix${10000 + random.nextInt(90000)}');
-    _selectedTicket = _tickets[0];
-  }
-
-  void _addNewTicket() {
-    final prefix = widget.settings['ticket_prefix'] ?? 'L';
-    final random = Random();
-    setState(() {
-      _tickets.add('$prefix${10000 + random.nextInt(90000)}');
-    });
+    _tickets = List.generate(50, (i) => '$prefix${10000 + _random.nextInt(90000)}');
+    if (_tickets.isNotEmpty) _selectedTicket = _tickets[0];
   }
 
   @override
@@ -53,25 +45,27 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
             margin: const EdgeInsets.only(right: 12),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(color: const Color(0xFF6C3BE8), borderRadius: BorderRadius.circular(20)),
-            child: Row(children: [
-              const Icon(Icons.account_balance_wallet, color: Colors.white, size: 16),
-              const SizedBox(width: 4),
-              const Text('₹250.00', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              const Icon(Icons.add_circle, color: Colors.white, size: 16),
+            child: Row(children: const [
+              Icon(Icons.account_balance_wallet, color: Colors.white, size: 16),
+              SizedBox(width: 4),
+              Text('Rs.250.00', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Icon(Icons.add_circle, color: Colors.white, size: 16),
             ]),
           ),
         ],
       ),
       body: Column(
         children: [
-          // Search bar
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(children: [
               Expanded(
                 child: Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 4)]),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 4)],
+                  ),
                   child: TextField(
                     controller: _searchController,
                     decoration: const InputDecoration(
@@ -80,75 +74,68 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(vertical: 12),
                     ),
-                    onSubmitted: (val) {
-                      if (val.isNotEmpty) {
-                        setState(() {
-                          if (!_tickets.contains(val)) _tickets.insert(0, val);
-                          _selectedTicket = val;
-                          _currentPage = 0;
-                          _pageController.jumpToPage(0);
-                        });
-                      }
-                    },
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF6C3BE8))),
-                child: Row(children: [
-                  const Icon(Icons.qr_code_scanner, color: Color(0xFF6C3BE8), size: 16),
-                  const SizedBox(width: 4),
-                  const Text('Scan', style: TextStyle(color: Color(0xFF6C3BE8), fontWeight: FontWeight.bold)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF6C3BE8)),
+                ),
+                child: const Row(children: [
+                  Icon(Icons.qr_code_scanner, color: Color(0xFF6C3BE8), size: 16),
+                  SizedBox(width: 4),
+                  Text('Scan', style: TextStyle(color: Color(0xFF6C3BE8), fontWeight: FontWeight.bold)),
                 ]),
               ),
             ]),
           ),
           const Padding(
             padding: EdgeInsets.only(left: 16, bottom: 8),
-            child: Align(alignment: Alignment.centerLeft,
-              child: Text('Enter any ticket number to view', style: TextStyle(color: Colors.grey, fontSize: 12))),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Enter any ticket number to view', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            ),
           ),
-          // Ticket slider
           Expanded(
             child: PageView.builder(
               controller: _pageController,
-              onPageChanged: (i) => setState(() {
-                _currentPage = i;
-                _selectedTicket = _tickets[i % _tickets.length];
-              }),
+              onPageChanged: (i) {
+                setState(() {
+                  _currentPage = i;
+                  _selectedTicket = _tickets[i % _tickets.length];
+                });
+              },
               itemBuilder: (context, index) {
                 final ticketNum = _tickets[index % _tickets.length];
                 return _buildTicketCard(ticketNum, index);
               },
             ),
           ),
-          // Bottom info
           Container(
             color: Colors.white,
             padding: const EdgeInsets.all(16),
             child: Column(children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(children: [
-                      const Text('Total Tickets', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      const Text('∞', style: TextStyle(color: Color(0xFF6C3BE8), fontSize: 28, fontWeight: FontWeight.bold)),
-                      const Text('Unlimited', style: TextStyle(color: Color(0xFF6C3BE8), fontWeight: FontWeight.bold)),
-                    ]),
-                  ),
-                  Container(width: 1, height: 60, color: Colors.grey.shade200),
-                  Expanded(
-                    child: Column(children: [
-                      const Text('Total Amount', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                      const SizedBox(height: 8),
-                      Text('₹$price.00', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 24)),
-                    ]),
-                  ),
-                ],
-              ),
+              Row(children: [
+                Expanded(
+                  child: Column(children: [
+                    const Text('Total Tickets', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const Text('oo', style: TextStyle(color: Color(0xFF6C3BE8), fontSize: 28, fontWeight: FontWeight.bold)),
+                    const Text('Unlimited', style: TextStyle(color: Color(0xFF6C3BE8), fontWeight: FontWeight.bold)),
+                  ]),
+                ),
+                Container(width: 1, height: 60, color: Colors.grey.shade200),
+                Expanded(
+                  child: Column(children: [
+                    const Text('Total Amount', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 8),
+                    Text('Rs.$price.00', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 24)),
+                  ]),
+                ),
+              ]),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -167,7 +154,7 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Row(children: const [
+                    child: const Row(children: [
                       Text('BUY NOW', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
                       SizedBox(width: 8),
                       Icon(Icons.arrow_forward, color: Colors.white),
@@ -183,13 +170,6 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
   }
 
   Widget _buildTicketCard(String ticketNum, int index) {
-    final settings = widget.settings;
-    final prize = settings['prize_amount'] ?? '10';
-    final label = settings['prize_label'] ?? 'LAKHS';
-    final drawDate = settings['draw_date'] ?? '15.06.2025';
-    final drawTime = settings['draw_time'] ?? '08:00 PM';
-    final price = settings['ticket_price'] ?? '10';
-
     return Column(
       children: [
         Expanded(
@@ -197,7 +177,6 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Stack(
               children: [
-                // Ticket image background
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: widget.imageUrl.isNotEmpty
@@ -206,12 +185,12 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
                         fit: BoxFit.fill,
                         width: double.infinity,
                         height: double.infinity,
+                        errorWidget: (c, u, e) => _buildFallback(),
                       )
-                    : _buildTicketFallback(prize, label, drawDate, drawTime, price),
+                    : _buildFallback(),
                 ),
-                // Ticket number overlay - positioned where the box is on image
                 Positioned(
-                  top: 12, right: 12,
+                  top: 14, right: 16,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
@@ -236,7 +215,6 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
         Text('Ticket ${(index % _tickets.length) + 1} of Unlimited',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         const SizedBox(height: 8),
-        // Dots
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(7, (i) => Container(
@@ -254,68 +232,38 @@ class _BuyTicketScreenState extends State<BuyTicketScreen> {
     );
   }
 
-  Widget _buildTicketFallback(String prize, String label, String drawDate, String drawTime, String price) {
+  Widget _buildFallback() {
+    final settings = widget.settings;
+    final prize = settings['prize_amount'] ?? '10';
+    final label = settings['prize_label'] ?? 'LAKHS';
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.red, width: 4),
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(children: [
-        Container(color: Colors.red, padding: const EdgeInsets.all(4),
-          child: const Text('★ LUCKY STAR LOTTERY ★ LUCKY STAR LOTTERY ★',
-            style: TextStyle(color: Colors.white, fontSize: 8), maxLines: 1)),
-        Expanded(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                colors: [Color(0xFF87CEEB), Color(0xFF228B22)],
-              ),
-            ),
-            child: Center(
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text('LUCKY ', style: TextStyle(color: Color(0xFF1a0080), fontWeight: FontWeight.w900, fontSize: 22)),
-                  Text('★', style: TextStyle(color: Colors.orange, fontSize: 24)),
-                  Text(' STAR', style: TextStyle(color: Color(0xFF1a0080), fontWeight: FontWeight.w900, fontSize: 22)),
-                ]),
-                Text('LOTTERY', style: TextStyle(color: Colors.red, letterSpacing: 6, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Container(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-                  color: const Color(0xFF003399),
-                  child: const Text('FIRST PRIZE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 3))),
-                const SizedBox(height: 8),
-                Text('₹$prize $label', style: const TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.w900)),
-              ]),
-            ),
-          ),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF87CEEB), Color(0xFF228B22)],
         ),
-      ])
-
-mkdir -p android/app/src/main && cat > android/app/src/main/AndroidManifest.xml << 'EOF'
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <application
-        android:label="Lucky Star Lottery"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
-        <activity
-            android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/LaunchTheme"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
-            android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
-            <meta-data android:name="io.flutter.embedding.android.NormalTheme" android:resource="@style/NormalTheme"/>
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-        <meta-data android:name="flutterEmbedding" android:value="2"/>
-    </application>
-</manifest>
+      ),
+      child: Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Text('LUCKY ', style: TextStyle(color: Color(0xFF1a0080), fontWeight: FontWeight.w900, fontSize: 22)),
+            Text('* ', style: TextStyle(color: Colors.orange, fontSize: 24)),
+            Text('STAR', style: TextStyle(color: Color(0xFF1a0080), fontWeight: FontWeight.w900, fontSize: 22)),
+          ]),
+          const Text('LOTTERY', style: TextStyle(color: Colors.red, letterSpacing: 6, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            color: const Color(0xFF003399),
+            child: const Text('FIRST PRIZE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 3)),
+          ),
+          const SizedBox(height: 8),
+          Text('Rs.$prize $label', style: const TextStyle(color: Colors.red, fontSize: 28, fontWeight: FontWeight.w900)),
+        ]),
+      ),
+    );
+  }
+}
